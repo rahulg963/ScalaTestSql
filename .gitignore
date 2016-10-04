@@ -1,0 +1,7 @@
+/project/project
+/project/target
+.log
+.idea/
+src/main/scala-2.11/target/
+src/test/
+target/
