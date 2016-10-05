@@ -19,7 +19,6 @@ import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.http.scaladsl.server.{Directives, Route, RouteResult}
 import akka.http.scaladsl.{ConnectionContext, Http, HttpsConnectionContext}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
 import scala.language.postfixOps
@@ -38,10 +37,11 @@ trait Service{
   val routes : Route = {
     pathPrefix("imdb"){
       pathPrefix("rate"){
-        (pathEndOrSingleSlash & get & parameter('movie_id, 'rate)){ (movieId,rate) =>
+        (pathEndOrSingleSlash & get & parameter('movie_id,'user_id ,'rate)){ (movieId, user_id, rate) =>
           complete{
+              //updated
             val stmt = SqlConnection.connection.createStatement()
-            var sql = "UPDATE movies SET movie_rating=" + "'" + rate + "'" + "WHERE movie_id=" + "'" + movieId + "'" + ";"
+            var sql = "INSERT INTO movies_rating (movie_id, user_id, movie_rating) VALUES (" + movieId + "," + "'" + user_id +"', " + rate +");"
             println(" ****** " + sql)
             val resultSet = stmt.executeUpdate(sql);
             OK
@@ -50,46 +50,49 @@ trait Service{
       } ~ pathPrefix("top"){
         (pathEndOrSingleSlash & get & parameter('genre)){ genre =>
           complete{
+            //updated
             val stmt = SqlConnection.connection.createStatement()
-            var sql = "select distinct movie_rating, movie_id from movies where movie_genre=" + "'" +genre.toString + "'" + "order by movie_rating desc limit 5;"
+            var sql = "Select DISTINCT t1.movie_id,t1.movie_rating, t1.movie_genre from(SELECT DISTINCT movies_rating.movie_id as movie_id, movies_rating.movie_rating as movie_rating, movie_genre FROM movies_rating LEFT JOIN movies_genre ON movies_rating.movie_id=movies_genre.movie_id WHERE movie_genre='"+ genre+"' ORDER BY movie_rating DESC)as t1 GROUP BY movie_id ORDER BY movie_rating DESC limit 5"
             println(" ****** " + sql)
             val resultSet = stmt.executeQuery(sql);
             while ( resultSet.next() ) {
               val movieID = resultSet.getString("movie_id")
               val rating = resultSet.getString("movie_rating")
-              println("MovieID : " + movieID + " Rating : " + rating)
+              val genre = resultSet.getString("movie_genre")
+              println("MovieID : " + movieID + " Rating : " + rating + " Genre : " + genre)
             }
             OK
           }
         }
       } ~ pathPrefix("sort"){
-        (pathEndOrSingleSlash & get & parameter('order)){ order =>
+        (pathEndOrSingleSlash & get){
           complete{
             // DESC // ASC
             val stmt = SqlConnection.connection.createStatement()
-            var sql = "SELECT * from movies ORDER BY movie_genre " + order + ";"
+            var sql = "SELECT movie_genre, avg(movies_rating.movie_rating) as movie_rating FROM movies_genre INNER JOIN movies_rating ON movies_genre.movie_id=movies_rating.movie_id GROUP BY movie_genre ORDER BY movie_rating DESC"
             println(" ****** " + sql)
             val resultSet = stmt.executeQuery(sql);
 
             while ( resultSet.next() ) {
-              val movie_id = resultSet.getString("movie_id")
+
               val movie_rating = resultSet.getString("movie_rating")
               val movie_genre = resultSet.getString("movie_genre")
-              val movie_lang = resultSet.getString("movie_lang")
-              println("Movie_id : " + movie_id + " Rating : " + movie_rating + " movie_genre : " + movie_genre + " movie_lang : " + movie_lang)
+
+              println(" Rating : " + movie_rating + " movie_genre : " + movie_genre)
             }
             OK
           }
         }
       } ~pathPrefix("avg"){
-        (pathEndOrSingleSlash & get & parameter('genre)){ genre =>
+        (pathEndOrSingleSlash & get & parameter('movie_id)){ movie_id =>
           complete{
+            //updated
             val stmt = SqlConnection.connection.createStatement()
-            var sql = "SELECT avg(movie_rating) FROM movies WHERE movie_genre="+ "'" + genre +"'" + ";"
+            var sql = "SELECT avg(movie_rating), movie_id FROM movies_rating WHERE movie_id = " + movie_id + " GROUP BY movie_id;"
             println(" ****** " + sql)
             val resultSet = stmt.executeQuery(sql);
             if(resultSet.next())
-              println("AVERAGE Value is : " + resultSet.getFloat(1))
+              println("AVERAGE Value of " + movie_id + " : " + resultSet.getFloat(1))
             OK
           }
         }

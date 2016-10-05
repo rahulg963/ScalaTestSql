@@ -1,0 +1,120 @@
+mysql -u root -p
+----
+INSERT INTO movies_rating (movie_id, user_id, movie_rating) VALUES (1,"u1", 2);
+SELECT avg(movie_rating), movie_id FROM movies_rating WHERE movie_id = 2 GROUP BY movie_id;
+SELECT avg(movie_rating), movie_id FROM movies_rating GROUP BY movie_id HAVING movie_id=2;
+INSERT INTO movies_genre (movie_id, movie_genre) VALUES (1, "g1");
+SELECT * FROM movies_rating,movies_genre where movie_genre="g1" order by movie_rating desc limit 5
+
+SELECT *
+FROM movies_rating,movies_genre
+where movie_genre="g1"
+GROUP BY movies_rating.movie_id
+order by movie_rating desc limit 5
+
+--
+SELECT movie_genre, avg(movies_rating.movie_rating) FROM movies_genre INNER JOIN movies_rating ON movies_genre.movie_id=movies_rating.movie_id GROUP BY movie_genre
+
+SELECT movie_genre, avg(movies_rating.movie_rating)
+FROM movies_genre
+INNER JOIN movies_rating
+ON movies_genre.movie_id=movies_rating.movie_id
+GROUP BY movie_genre
+
+Select DISTINCT t1.movie_id,t1.movie_rating, t1.movie_genre from
+  (
+    SELECT DISTINCT movies_rating.movie_id as movie_id, movies_rating.movie_rating as movie_rating, movie_genre
+    FROM movies_rating
+      LEFT JOIN movies_genre
+        ON movies_rating.movie_id=movies_genre.movie_id
+    WHERE movie_genre='g1'
+    ORDER BY movie_rating DESC
+  )as t1
+GROUP BY movie_id
+ORDER BY movie_rating DESC limit 5
+
+--
+
+
+----
+CREATE TABLE movies_details (
+  movie_id INT NOT NULL AUTO_INCREMENT,
+  movie_name VARCHAR(100) NOT NULL,
+  PRIMARY KEY ( movie_id )
+);
+
+CREATE TABLE movies_lang (
+  movie_id INT NOT NULL AUTO_INCREMENT,
+  movie_lang VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE movies_rating (
+  movie_id INT NOT NULL,
+  user_id VARCHAR(40) NOT NULL ,
+  movie_rating INT NOT NULL,
+  PRIMARY KEY (movie_id,user_id)
+);
+
+CREATE TABLE movies_actors (
+  movie_id INT NOT NULL,
+  movie_actor VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE movies_genre (
+  movie_id INT NOT NULL,
+  movie_genre VARCHAR(100) NOT NULL
+);
++++++++++++++++++++++++++++++++++++++++++++++
+------
+CREATE TABLE movies (
+   movie_id INT NOT NULL AUTO_INCREMENT,
+   movie_name VARCHAR(100) NOT NULL,
+   movie_lang VARCHAR(100) NOT NULL,
+   movie_genre VARCHAR(40) NOT NULL,
+   movie_rating INT NOT NULL,
+   PRIMARY KEY ( movie_id )
+);
+
+
+INSERT INTO movies (movie_id, movie_lang, movie_genre, movie_rating) VALUES (3,"en","g1", 0);
+
+-----
+
+		Select Top 5 from movies_ratings on basis movie_genre
+select distinct movie_rating, movie_id from movies where movie_genre="g1" order by movie_rating desc limit 5;
+
+		Update Rating
+UPDATE movies SET movie_rating='1'WHERE movie_id='1';
+
+		Sorting Based on Genre
+SELECT * from movies ORDER BY movie_genre ASC;
+
+		Calculate Average Value
+SELECT avg(movie_rating) FROM movies WHERE movie_genre='g1';
+
+-----
+
+db.movies.insert({"movieId" : "m1", "lang" : "eng", "genre" : "g1", "rating" : 0,"actors" : ["a1", "a2"] } )
+
+db.movies.insert({"movieId" : "m2", "lang" : "eng", "genre" : "g2", "rating" : 0,"actors" : ["a2", "a3"] } )
+
+db.movies.insert({"movieId" : "m3", "lang" : "eng", "genre" : "g1", "rating" : 0,"actors" : ["a4", "a5"] } )
+
+db.movies.insert({"movieId" : "m4", "lang" : "hind", "genre" : "g1", "rating" : 0,"actors" : ["a2", "a3"] })
+
+db.movies.insert({"movieId" : "m5", "lang" : "hind", "genre" : "g2", "rating" : 0,"actors" : ["a1", "a2"] })
+
+db.movies.insert({"movieId" : "m6", "lang" : "eng", "genre" : "g3", "rating" : 0,"actors" : ["a3", "a5"] } )
+
+db.movies.insert({"movieId" : "m7", "lang" : "jap", "genre" : "g3", "rating" : 0,"actors" : ["a2", "a5"] } )
+
+db.movies.insert({"movieId" : "m8", "lang" : "eng", "genre" : "g2", "rating" : 0,"actors" : ["a4", "a1"] } )
+
+db.movies.insert({"movieId" : "m9", "lang" : "hind", "genre" : "g1", "rating" : 0,"actors" : ["a1", "a3"] } )
+
+db.movies.insert({"movieId" : "m10", "lang" : "hind", "genre" : "g2", "rating" : 0,"actors" : ["a3", "a5"] } )
+
+=====
+List Top 5
+=====
+db.movies.find({"genre" : "g1"}).sort({"genre": -1}).limit(5)
